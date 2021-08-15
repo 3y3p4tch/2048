@@ -8,5 +8,5 @@ There are two variants:
 
 ## Performance
 
-- The C++ variant achieves around **1500 FPS** using ncurses library.
+- The C++ variant achieves around **31,000 FPS** using ncurses library.
 - The internal Grid class achieves nearly **1.5e7** iterations per second on 11th Gen Intel processor running at 4GHz.

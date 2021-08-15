@@ -1,7 +1,6 @@
 #include <array>
 #include <cstdint>
 #include <random>
-#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <limits>
@@ -163,8 +162,12 @@ namespace {
             if (has_colors()) {
                 colors_ = true;
                 start_color();
-                init_pair(1, COLOR_WHITE, COLOR_RED);
-                init_pair(2, COLOR_WHITE, COLOR_BLACK);
+                init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+                init_pair(2, COLOR_RED, COLOR_BLACK);
+                init_pair(3, COLOR_GREEN, COLOR_BLACK);
+                init_pair(4, COLOR_MAGENTA, COLOR_BLACK);
+                init_pair(5, COLOR_CYAN, COLOR_BLACK);
+                init_pair(6, COLOR_BLUE, COLOR_BLACK);
             }
             refresh();
 
@@ -229,23 +232,17 @@ namespace {
 
             for (auto r = 0; r < grid_complexity; r++) {
                 for (auto c = 0; c < grid_complexity; c++) {
+                    wmove(gameboard_, r * (cell_size.height + 1) + (cell_size.height + 1) / 2, c * (cell_size.width + 1) + 1);
+                    for(auto i = 0; i < cell_size.width; i++)
+                        waddch(gameboard_, ' ');
+
                     const auto val = grid_data[r * grid_complexity + c];
-                    if (colors_) {
-                        wattron(gameboard_, val ? COLOR_PAIR(1) : COLOR_PAIR(2));
-                        for (auto i = 0; i < cell_size.height; i++) {
-                            wmove(gameboard_, r * (cell_size.height + 1) + 1 + i, c * (cell_size.width + 1) + 1);
-                            for (auto j = 0; j < cell_size.width; j++) {
-                                waddch(gameboard_, ' ');
-                            }
-                        }
-                        wattroff(gameboard_, val ? COLOR_PAIR(1) : COLOR_PAIR(2));
-                    }
                     if (val) {
-                        if (colors_) wattron(gameboard_, val ? COLOR_PAIR(1) : COLOR_PAIR(2));
+                        if (colors_) wattron(gameboard_, COLOR_PAIR(val % 6 + 1) | A_BOLD);
                         const uint8_t val_width = snprintf(nullptr, 0, "%d", 1 << val);
                         mvwprintw(gameboard_, r * (cell_size.height + 1) + (cell_size.height + 1) / 2,
-                                  c * (cell_size.width + 1) + (cell_size.width - val_width) / 2 + 1, "%d", 1 << val);
-                        if (colors_) wattroff(gameboard_, val ? COLOR_PAIR(1) : COLOR_PAIR(2));
+                                  c * (cell_size.width + 1) + cell_size.width - val_width, "%d", 1 << val);
+                        if (colors_) wattron(gameboard_, COLOR_PAIR(val % 6 + 1) | A_BOLD);
                     }
                 }
             }
@@ -255,49 +252,49 @@ namespace {
             auto top = []() {
                 std::array<cchar_t, gameboard_dims.width> array = {};
                 auto it = array.begin();
-                *it = *WACS_T_ULCORNER;
+                *it = *WACS_ULCORNER;
                 it++;
                 for (auto i = 0; i < grid_complexity; i++) {
                     for (auto j = 0; j < cell_size.width; j++) {
-                        *it = *WACS_T_HLINE;
+                        *it = *WACS_HLINE;
                         it++;
                     }
-                    *it = *WACS_T_TTEE;
+                    *it = *WACS_TTEE;
                     it++;
                 }
-                array.back() = *WACS_T_URCORNER;
+                array.back() = *WACS_URCORNER;
                 return array;
             }();
             auto middle = []() {
                 std::array<cchar_t, gameboard_dims.width> array = {};
                 auto it = array.begin();
-                *it = *WACS_T_LTEE;
+                *it = *WACS_LTEE;
                 it++;
                 for (auto i = 0; i < grid_complexity; i++) {
                     for (auto j = 0; j < cell_size.width; j++) {
-                        *it = *WACS_T_HLINE;
+                        *it = *WACS_HLINE;
                         it++;
                     }
-                    *it = *WACS_T_PLUS;
+                    *it = *WACS_PLUS;
                     it++;
                 }
-                array.back() = *WACS_T_RTEE;
+                array.back() = *WACS_RTEE;
                 return array;
             }();
             auto bottom = []() {
                 std::array<cchar_t, gameboard_dims.width> array = {};
                 auto it = array.begin();
-                *it = *WACS_T_LLCORNER;
+                *it = *WACS_LLCORNER;
                 it++;
                 for (auto i = 0; i < grid_complexity; i++) {
                     for (auto j = 0; j < cell_size.width; j++) {
-                        *it = *WACS_T_HLINE;
+                        *it = *WACS_HLINE;
                         it++;
                     }
-                    *it = *WACS_T_BTEE;
+                    *it = *WACS_BTEE;
                     it++;
                 }
-                array.back() = *WACS_T_LRCORNER;
+                array.back() = *WACS_LRCORNER;
                 return array;
             }();
             // top
@@ -307,7 +304,7 @@ namespace {
                 for (auto j = 0; j < grid_complexity + 1; j++) {
                     for (auto k = 0; k < cell_size.height; k++) {
                         mvwadd_wch(gameboard_, i * (cell_size.height + 1) + 1 + k, j * (cell_size.width + 1),
-                                   WACS_T_VLINE);
+                                   WACS_VLINE);
                     }
                 }
             }
@@ -320,7 +317,7 @@ namespace {
         }
 
         static constexpr uint8_t grid_complexity = 5;
-        static constexpr Dimensions cell_size = {3, 9};
+        static constexpr Dimensions cell_size = {1, 9};
         static constexpr Dimensions gameboard_dims = {(cell_size.height + 1) * grid_complexity + 1,
                                                       (cell_size.width + 1) * grid_complexity + 1};
         // constexpr 
@@ -351,5 +348,5 @@ int main()
     // std::cout << count << std::endl;
 
     auto ui = TUI();
-    ui.benchmark();
+    ui.mainloop();
 }
